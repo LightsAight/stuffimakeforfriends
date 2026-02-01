@@ -1,4 +1,7 @@
 
+
+
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -111,7 +114,12 @@ local FunctionTranslators = {
 		else
 			local FormattedData = "{"
 			for Index, Value in next, Data do
-				FormattedData = FormattedData .. string.format("[%s] = %s, ", tostring(Index), tostring(Value))
+				if typeof(Value) == "CFrame" then
+					Value = `CFrame.new({tostring(Value)})`
+				else
+					Value = tostring(Value)
+				end
+				FormattedData = FormattedData .. string.format('["%s"] = %s, ', tostring(Index), Value)
 			end
 			Data = FormattedData:gsub(", $", "") .. "}"
 		end
