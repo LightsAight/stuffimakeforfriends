@@ -107,7 +107,7 @@ local FunctionTranslators = {
 			local TowerToClone = Data.towerToClone:GetAttribute("Index")
 			local TowerPosition = Data.towerPosition
 			
-			Data = string.format("{towerToClone = %s, towerPosition = {Vector.new(%s)}}",
+			Data = string.format("{towerToClone = %s, towerPosition = {Vector3.new(%s)}}",
 				TowerToClone,
 				tostring(TowerPosition)
 			)
