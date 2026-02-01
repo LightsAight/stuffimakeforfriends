@@ -1,3 +1,4 @@
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -115,7 +116,7 @@ local FunctionTranslators = {
 			Data = FormattedData:gsub(", $", "") .. "}"
 		end
 		
-		SaveText(`TDS:Ability({TowerIndex}, {AbilityName}, {Data})`)
+		SaveText(`TDS:Ability({TowerIndex}, "{AbilityName}", {Data})`)
 	end,
 
 	["Option"] = function(Args, RemoteCheck)
