@@ -251,11 +251,7 @@ local Player = game:GetService("Players").LocalPlayer
 
 
 local function GetTowerByIndex(Index)
-	for i, Tower in next, workspace.Towers:GetChildren() do
-		if Tower:GetAttribute("Index") == Index then
-			return Tower
-		end
-	end
+	return TDS.placed_towers[Index]
 end
 
 function TDS:PreciseSkip(WaveToSkip, Time)
