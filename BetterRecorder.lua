@@ -158,6 +158,23 @@ local FunctionTranslators = {
 			SaveText(`TDS:Unequip("{Tower}")`)
 		end
 	end,
+	
+	["TowerServerEvent"] = function(Args, RemoteCheck)
+		local Type = Args[3]
+		
+		if RemoteCheck ~= true then
+			return
+		end
+		
+		if Type == "ToggleSelectedTower" then
+			local Medic = Args[4]:GetAttribute("Index")
+			local SelectedTower = Args[5]:GetAttribute("Index")
+			
+			if Medic and SelectedTower then
+				SaveText(`TDS:MedicSelect({Medic}, {SelectedTower})`)
+			end
+		end
+	end,
 }
 
 
@@ -233,6 +250,14 @@ local Timer = StateFolder:WaitForChild("Timer"):WaitForChild("Time")
 local Player = game:GetService("Players").LocalPlayer
 
 
+local function GetTowerByIndex(Index)
+	for i, Tower in next, workspace.Towers:GetChildren() do
+		if Tower:GetAttribute("Index") == Index then
+			return Tower
+		end
+	end
+end
+
 function TDS:PreciseSkip(WaveToSkip, Time)
 	task.spawn(function()
 		local CurrentWave = StateModule.Wave
@@ -277,13 +302,33 @@ function TDS:Unequip(Tower)
 	end
 end
 
+function TDS:MedicSelect(MedicIndex, SelectedTowerIndex)
+	local Medic = GetTowerByIndex(MedicIndex)
+	local SelectedTower = GetTowerByIndex(SelectedTowerIndex)
+	
+	while not Medic and not SelectedTower do
+		Medic = GetTowerByIndex(MedicIndex)
+		SelectedTower = GetTowerByIndex(SelectedTowerIndex)
+	end
+	
+	local Result = false
+	
+	while not Result do
+		Result = ReplicatedStorage.RemoteFunction:InvokeServer(
+			"Troops",
+			"TowerServerEvent",
+			"ToggleSelectedTower",
+			Medic,
+			SelectedTower
+		)
+	end
+end
+
 -- END OF CUSTOM FUNCTION SHIT! --
 
 
 
 ]], Towers[1], Towers[2], Towers[3], Towers[4], Towers[5], StateFolder.Difficulty.Value, StateFolder.Map.Value, Modifiers))
-
-
 
 
 local OldNamecall
