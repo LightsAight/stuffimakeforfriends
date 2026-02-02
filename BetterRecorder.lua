@@ -116,6 +116,8 @@ local FunctionTranslators = {
 			for Index, Value in next, Data do
 				if typeof(Value) == "CFrame" then
 					Value = `CFrame.new({tostring(Value)})`
+				elseif typeof(Value) == "Vector3" then
+					Value = `Vector3.new({tostring(Value)})`
 				else
 					Value = tostring(Value)
 				end
