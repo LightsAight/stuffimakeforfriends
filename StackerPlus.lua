@@ -33,7 +33,7 @@ local Hotkey = RequireClient("HotKey")
 
 
 --[[ FUCKASS INIT ]]
-Settings.Stack = "LeftAlt"
+Settings.Stack = "Tab"
 Settings.Max = "LeftControl"
 
 PlacementController.Stack = false
@@ -102,7 +102,7 @@ local Actions = debug.getupvalue(PlacementController.Start, Index)
 
 local ExpandedActions = table.clone(Actions)
 ExpandedActions["Stack"] = {
-	["Key"] = Enum.KeyCode.LeftAlt,
+	["Key"] = Enum.KeyCode.Tab,
 	["ActionText"] = "Stack",
 	["Layout"] = 5,
 	["ScaleMultiplier"] = 0.4
