@@ -1,6 +1,4 @@
 
-getgenv().StratName = "epicfail9.11"
-
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
