@@ -1,5 +1,5 @@
 
-
+getgenv().StratName = "epicfail9.11"
 
 
 local Players = game:GetService("Players")
@@ -63,7 +63,7 @@ local FunctionTranslators = {
 
 	["Upgrade"] = function(Args, RemoteCheck)
 		local TowerIndex = Args[4].Troop:GetAttribute("Index");
-		local PathTarget = Args[4].Path
+		local PathTarget = Args[4].Path or 1
 		if not RemoteCheck then
 			return
 		end
@@ -93,7 +93,7 @@ local FunctionTranslators = {
 		end
 		SaveText(`TDS:PreciseSkip({StateModule.Wave}, {Timer})`)
 	end,
-	
+
 	["Abilities"] = function(Args, RemoteCheck)
 		local TowerIndex = Args[4].Troop:GetAttribute("Index")
 		local AbilityName = Args[4].Name
@@ -102,11 +102,11 @@ local FunctionTranslators = {
 		if RemoteCheck ~= true then
 			return
 		end
-		
+
 		if AbilityName == "Hologram Tower" then
 			local TowerToClone = Data.towerToClone:GetAttribute("Index")
 			local TowerPosition = Data.towerPosition
-			
+
 			Data = string.format("{towerToClone = %s, towerPosition = {Vector3.new(%s)}}",
 				TowerToClone,
 				tostring(TowerPosition)
@@ -125,7 +125,7 @@ local FunctionTranslators = {
 			end
 			Data = FormattedData:gsub(", $", "") .. "}"
 		end
-		
+
 		SaveText(`TDS:Ability({TowerIndex}, "{AbilityName}", {Data})`)
 	end,
 
@@ -140,7 +140,7 @@ local FunctionTranslators = {
 
 		SaveText(`TDS:SetOption({TowerIndex}, "{OptionName}", "{Value}")`)
 	end,
-	
+
 	["Equip"] = function(Args, RemoteCheck)
 		local IsTower = Args[3] == "tower"
 
@@ -149,7 +149,7 @@ local FunctionTranslators = {
 			SaveText(`TDS:Equip("{Tower}")`)
 		end
 	end,
-	
+
 	["Unequip"] = function(Args, RemoteCheck)
 		local IsTower = Args[3] == "tower"
 
@@ -158,18 +158,18 @@ local FunctionTranslators = {
 			SaveText(`TDS:Unequip("{Tower}")`)
 		end
 	end,
-	
+
 	["TowerServerEvent"] = function(Args, RemoteCheck)
 		local Type = Args[3]
-		
+
 		if RemoteCheck ~= true then
 			return
 		end
-		
+
 		if Type == "ToggleSelectedTower" then
 			local Medic = Args[4]:GetAttribute("Index")
 			local SelectedTower = Args[5]:GetAttribute("Index")
-			
+
 			if Medic and SelectedTower then
 				SaveText(`TDS:MedicSelect({Medic}, {SelectedTower})`)
 			end
@@ -327,27 +327,106 @@ end
 ]], Towers[1], Towers[2], Towers[3], Towers[4], Towers[5], StateFolder.Difficulty.Value, StateFolder.Map.Value, Modifiers))
 
 
+
+
+
+
+
+
+
+-- Dear Reader, Unreliable currently goes unused, feel free to add a use for it or something idk.
+local AllowedClassNames = { "RemoteEvent", "RemoteFunction", "UnreliableRemoteEvent"} 
+
+
 local OldNamecall
-OldNamecall = hookmetamethod(game, '__namecall', function(...)
-	local Self, Args = (...), ({select(2, ...)})
-	local Method = getnamecallmethod()
-	if Method == "InvokeServer" and Self.name == "RemoteFunction" then
-		local Thread = coroutine.running()
-		coroutine.wrap(function(Args)
-			local Timer = StateFolder.Timer.Time.Value
-			local RemoteFired = Self.InvokeServer(Self, unpack(Args))
+OldNamecall = hookmetamethod(game, "__namecall", function(...)
+	local self = ...
+	
+	-- Dear Reader, if you dislike me preferring string.upper over string.lower,
+	-- feel free to jump
+	local Method = string.upper(getnamecallmethod())
+	
+
+	if
+		typeof(self) == "Instance"
+		and table.find(AllowedClassNames, self.ClassName)
+		and (Method == "INVOKESERVER" or Method == "FIRESERVER")
+	then
+		
+		local Timer = StateFolder.Timer.Time.Value
+		local Args = {select(2, ...)}
+
+		if self.ClassName == "RemoteFunction" and Method == "INVOKESERVER" then
+			local PackedResult = table.pack(OldNamecall(...))
+
 			if FunctionTranslators[Args[2]] then
-				FunctionTranslators[Args[2]](Args, RemoteFired, Timer)
+				FunctionTranslators[Args[2]](Args, PackedResult[1], Timer)
 			end
-			coroutine.resume(Thread, RemoteFired)
-		end)(Args)
-		return coroutine.yield()
-	elseif Method == "FireServer" and FunctionTranslators[Self.name] then
-		local Function = FunctionTranslators[Self.name] or FunctionTranslators[Args[1]] or FunctionTranslators[Args[2]]
-		if Function then
-			Function(Args)
+
+			return table.unpack(PackedResult, 1, PackedResult.n)
+		elseif self.Name == "RemoteEvent" and Method == "FIRESERVER" then
+			local Function = FunctionTranslators[self.Name] or FunctionTranslators[Args[1]] or FunctionTranslators[Args[2]]
+			if Function then
+				Function(Args)
+			end
 		end
 	end
-	return OldNamecall(..., unpack(Args))
+
+	return OldNamecall(...)
 end)
 
+
+local FunctionsToHook
+do
+	local RemoteFunction = Instance.new("RemoteFunction")
+	local RemoteEvent = Instance.new("RemoteEvent")
+	local UnreliableRemoteEvent = Instance.new("UnreliableRemoteEvent")
+
+	FunctionsToHook = {
+		RemoteFunction.InvokeServer,
+		RemoteEvent.FireServer,
+		UnreliableRemoteEvent.FireServer,
+	}
+
+	RemoteFunction:Destroy()
+	RemoteEvent:Destroy()
+	UnreliableRemoteEvent:Destroy()
+end
+
+
+local OriginalFunctions = {}
+
+for _, Function in next, FunctionsToHook do
+	local Method = string.upper(debug.info(Function, "n"))
+
+	OriginalFunctions[Function] = hookfunction(Function, function(...)
+		local self = ...
+		
+		if
+			typeof(self) == "Instance"
+			and table.find(AllowedClassNames, self.ClassName)
+			and (Method == "INVOKESERVER" or Method == "FIRESERVER")
+		then
+
+			local Timer = StateFolder.Timer.Time.Value
+			local Args = {select(2, ...)}
+
+			if self.ClassName == "RemoteFunction" and Method == "INVOKESERVER" then
+				local PackedResult = table.pack(OriginalFunctions[Function](...))
+
+				if FunctionTranslators[Args[2]] then
+					FunctionTranslators[Args[2]](Args, PackedResult[1], Timer)
+				end
+
+				return table.unpack(PackedResult, 1, PackedResult.n)
+			elseif self.Name == "RemoteEvent" and Method == "FIRESERVER" then
+				local Function = FunctionTranslators[self.Name] or FunctionTranslators[Args[1]] or FunctionTranslators[Args[2]]
+				if Function then
+					Function(Args)
+				end
+			end
+		end
+
+		return OriginalFunctions[Function](...)
+	end)
+end
