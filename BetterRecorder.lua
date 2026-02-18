@@ -417,7 +417,7 @@ for _, Function in next, FunctionsToHook do
 				end
 
 				return table.unpack(PackedResult, 1, PackedResult.n)
-			elseif self.Name == "RemoteEvent" and Method == "FIRESERVER" then
+			elseif self.ClassName == "RemoteEvent" and Method == "FIRESERVER" then
 				local Function = FunctionTranslators[self.Name] or FunctionTranslators[Args[1]] or FunctionTranslators[Args[2]]
 				if Function then
 					Function(Args)
