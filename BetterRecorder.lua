@@ -225,7 +225,7 @@ TDS:GameInfo("%s", {%s})
 
 -- SUPER TERRIBLE CUSTOM FUNCTIONS BELOW! --
 
-local Logger = getupvalues(TDS.Upgrade)[2] -- holy shit
+--local Logger = getupvalues(TDS.Upgrade)[2] -- holy shit
 
 --DUXI IF YOURE READING THIS 
 --PLEASE ADD TDS.Logger TO THE
@@ -271,10 +271,10 @@ function TDS:PreciseSkip(WaveToSkip, Time)
 					task.wait(0.2)
 				end
 				SkipDone = true
-				Logger:Log(`Voted to skip Wave {WaveToSkip} at {CurrentTime} seconds`)
+				--Logger:Log(`Voted to skip Wave {WaveToSkip} at {CurrentTime} seconds`)
 			else
 				if StateModule.Wave > WaveToSkip then
-					Logger:Log(`Cancel skipping vote for Wave {WaveToSkip}`)
+					--Logger:Log(`Cancel skipping vote for Wave {WaveToSkip}`)
 					break 
 				end
 				task.wait(0.5)
